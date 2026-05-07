@@ -17,7 +17,7 @@ Built for **Twist N Turns** dance studios — multi-location accounts audited mo
 | Phase | Outcome | Status |
 |-------|---------|--------|
 | Phase 0 | Setup, structure, schema, Meta App queued for review | ✅ |
-| Phase 1 | CSV-import audit producing Word reports | ⬜ |
+| Phase 1 | CSV-import audit producing Word reports | ✅ |
 | Phase 2 | Graph API integration (no manual exports) | ⬜ |
 | Phase 3 | Peer benchmarking | ⬜ |
 | Phase 4 | Monthly automated email + admin panel page | ⬜ |

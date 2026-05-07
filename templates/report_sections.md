@@ -1,0 +1,146 @@
+# Report sections — copy spec & tone reference
+
+This document is the spec for [`templates/report_template.docx`](report_template.docx). The Word template doesn't exist yet — `scripts/report.py` programmatically generates a default report. When you (Tapash) want to customize the look-and-feel, build a `.docx` template by hand following this spec, drop it into this folder, and `report.py` will pick it up automatically.
+
+## Tone
+
+Direct. Specific. Studio-manager-ready. The reader is someone who runs your dance studio's marketing or social — they need to know what to do tomorrow, not be impressed by jargon.
+
+- ✅ "Reels share is 28% — target 50%. Convert one carousel/week into a 15s Reel."
+- ❌ "It is recommended that the account explore opportunities to leverage short-form video content as part of an integrated content strategy."
+
+Avoid: "leverage", "synergy", "robust", "best-in-class", "stakeholder". Prefer numbers.
+
+## Document structure
+
+The generated `.docx` follows this order. Each section is independently overridable when you build the hand-template — `report.py` looks for these placeholder strings and replaces them.
+
+### 1. Cover
+
+| Element | Content |
+|---------|---------|
+| Title | "Instagram Audit — {{ACCOUNT_DISPLAY_NAME}}" |
+| Subtitle | "@{{USERNAME}} · {{PERIOD_START}} → {{PERIOD_END}}" |
+| Score badge | "{{OVERALL_SCORE}}/100" with grade letter "{{GRADE}}" |
+| Date stamp | "Generated: {{AUDIT_DATE}}" |
+| Footer | "Twist N Turns Internal — Confidential" |
+
+### 2. Executive summary (1 page)
+
+Three paragraphs:
+1. **Headline** — one sentence stating the overall score and grade in plain English. Example: "@twistnturns scored 67/100 (C) — solid foundations, weak Reels engagement."
+2. **What's working** — top 1–2 strengths, with a number.
+3. **What's hurting most** — top 1–2 weaknesses, with a number.
+
+Followed by a "Top 3 actions this week" bulleted list. Pull from the prioritized findings (impact × ease).
+
+### 3. Score breakdown table
+
+Per-dimension scores with the weight, weighted contribution, and a one-line finding.
+
+| Dimension | Score | Weight | Weighted | Key finding |
+|-----------|------:|------:|--------:|-------------|
+| Profile | 80 | 10% | 8.0 | Bio strong, link in bio, 6 highlights ✓ |
+| Cadence | 65 | 15% | 9.8 | 3.2 posts/week — below 4/week target |
+| Engagement | 72 | 25% | 18.0 | Median ER 2.4%, saves data missing |
+| Reels | 70 | 20% | 14.0 | Good retention on 4 of 7 Reels |
+| Audience | 60 | 10% | 6.0 | +2.1% growth, demo data partial |
+| Hashtags | 75 | 5% | 3.8 | Good diversity, 3 generic tags |
+| Benchmarks | 50 | 15% | 7.5 | Phase 3 — peer data pending |
+| **Total** | | **100%** | **67.1** | |
+
+Below the table: insert the **Score Radar chart** (`score_radar.png`).
+
+### 4. Top findings
+
+Pull the 5–8 highest-priority findings (sorted by `impact × ease` from `Finding.priority_score`). For each:
+
+- **Severity icon** (🟥 critical / 🟧 warning / 🟦 info / 🟩 positive)
+- **Title** (the finding's `title` field)
+- **Evidence** (1–2 lines of supporting numbers)
+- **Recommended action** (specific, executable in <1 week)
+- **Impact / Ease tags** (small labels)
+
+### 5. Per-dimension detail (one section per dimension)
+
+For each of the 7 dimensions:
+
+#### Section header
+
+`{dimension name} — {score}/100`
+
+#### Subscore breakdown
+
+If the dimension has subscores (cadence has frequency/regularity/mix/timing; engagement has ER/saves/c2l), show them as small bars or a 2-column table.
+
+#### Metrics table
+
+All `metrics` from `DimensionResult.metrics` rendered as a key-value table. Round numbers, format percentages with `%`, omit Nones with "—".
+
+#### Findings list
+
+All findings for this dimension, oldest first. Same format as the Top Findings section but with less whitespace.
+
+#### Embedded chart (where relevant)
+
+- **Engagement** → `engagement_over_time.png`
+- **Cadence** → `posting_heatmap.png`, `content_mix.png`
+- **Hashtags** → `hashtag_top.png`
+- **Reels** — no chart (content is in the metrics table)
+- **Audience** — no chart in Phase 1 (Phase 2+: growth chart, demo donut)
+- **Profile, Benchmarks** — no chart
+
+### 6. Prioritized action plan
+
+A numbered list, sorted by `priority_score` descending. Each action shows:
+
+| # | Action | Impact | Ease | Source dimension |
+|---|--------|:------:|:----:|------------------|
+| 1 | Convert one carousel/week into a 15s Reel | High | Medium | Cadence |
+| 2 | Add 5 niche hashtags per post (mix neighborhood + style) | Medium | Easy | Hashtags |
+| 3 | Tighten first 1.5s of every Reel | High | Medium | Reels |
+| ... | | | | |
+
+Cap at the top 10. Anything below that is in the per-dimension findings.
+
+### 7. Methodology footer
+
+One paragraph noting:
+
+- Data source (CSV from Meta Business Suite, dated …)
+- Period covered
+- Tool version (commit hash if available)
+- Where to tune scoring (`references/scoring_weights.json`)
+
+End with: *Generated by Instagram Audit Skill — github.com/TapasDas1982/Instagram_Audit_Skill*
+
+---
+
+## Building the hand-built template
+
+When you want a branded version with logos, color, custom fonts:
+
+1. Open Word, create a new doc with your branding (header logo, color scheme, font choices).
+2. Add empty placeholder paragraphs in each section, with these EXACT placeholder strings (the report generator does string-replace):
+
+| Placeholder | Replaced with |
+|-------------|---------------|
+| `{{COVER_TITLE}}` | "Instagram Audit — {Display Name}" |
+| `{{COVER_SUBTITLE}}` | "@username · 2026-04-08 → 2026-05-07" |
+| `{{OVERALL_SCORE}}` | "67" |
+| `{{GRADE}}` | "C" |
+| `{{AUDIT_DATE}}` | "2026-05-07" |
+| `{{EXECUTIVE_SUMMARY}}` | (multi-paragraph text) |
+| `{{SCORE_TABLE}}` | (rendered Word table — leave the placeholder paragraph; report.py inserts the table after it) |
+| `{{TOP_FINDINGS}}` | (rendered findings list) |
+| `{{ACTION_PLAN}}` | (rendered numbered list) |
+| `{{CHART_ENGAGEMENT}}` | inserts engagement_over_time.png |
+| `{{CHART_HEATMAP}}` | inserts posting_heatmap.png |
+| `{{CHART_MIX}}` | inserts content_mix.png |
+| `{{CHART_HASHTAGS}}` | inserts hashtag_top.png |
+| `{{CHART_RADAR}}` | inserts score_radar.png |
+
+3. Save as `templates/report_template.docx`.
+4. Re-run `scripts/audit.py`. The next report uses your template.
+
+If `templates/report_template.docx` doesn't exist, `report.py` falls back to a clean default layout that matches this spec — fully usable, just unbranded.

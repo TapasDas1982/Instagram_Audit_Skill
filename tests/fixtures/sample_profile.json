@@ -1,0 +1,47 @@
+{
+  "_comment": "Sidecar profile data the CSV doesn't contain. Manually filled before running an audit. Tapash: this is a SYNTHETIC fixture for tests — replace with a real export when ready.",
+
+  "username": "twistnturns",
+  "display_name": "Twist N Turns Dance Studios",
+  "bio": "Multi-style dance studios across Kolkata 🩰 Bharatanatyam · Bollywood · Hip-Hop · Contemporary. Recitals, workshops, certifications. Book a trial class via link below.",
+  "has_link": true,
+  "website": "https://twistnturns.in/book",
+  "follower_count": 5400,
+  "following_count": 380,
+  "media_count": 412,
+  "highlights_count": 6,
+  "is_business": true,
+  "profile_picture_url": "https://example.com/pic.jpg",
+
+  "audience": {
+    "follower_count_by_day": {
+      "2026-04-08": 5210,
+      "2026-04-15": 5275,
+      "2026-04-22": 5328,
+      "2026-04-30": 5380,
+      "2026-05-07": 5400
+    },
+    "geo": {
+      "Kolkata, IN": 62.0,
+      "Mumbai, IN": 8.5,
+      "Bengaluru, IN": 6.2,
+      "Delhi, IN": 5.1,
+      "Other India": 12.4,
+      "Outside India": 5.8
+    },
+    "age_gender": {
+      "F.18-24": 24.5,
+      "F.25-34": 28.2,
+      "F.35-44": 18.1,
+      "F.45-54": 9.4,
+      "M.18-24": 6.8,
+      "M.25-34": 8.1,
+      "M.35-44": 4.9
+    },
+    "active_hours": {
+      "6": 0.2, "7": 0.4, "8": 0.6, "9": 0.5, "10": 0.4, "11": 0.5,
+      "12": 0.7, "13": 0.6, "14": 0.5, "15": 0.5, "16": 0.6, "17": 0.7,
+      "18": 0.95, "19": 1.0, "20": 0.85, "21": 0.6, "22": 0.4, "23": 0.2
+    }
+  }
+}
