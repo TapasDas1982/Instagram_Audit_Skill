@@ -1,0 +1,39 @@
+{
+  "version": 1,
+  "_comment": "Edit this file to tune scoring without code changes. lib/scoring.py reads weights and thresholds from here. Weights MUST sum to 1.0.",
+  "weights": {
+    "profile": 0.10,
+    "cadence": 0.15,
+    "engagement": 0.25,
+    "reels": 0.20,
+    "audience": 0.10,
+    "hashtags": 0.05,
+    "benchmarks": 0.15
+  },
+  "thresholds": {
+    "engagement_rate_strong_pct": 3.0,
+    "engagement_rate_weak_pct": 1.0,
+    "saves_to_likes_strong_pct": 5.0,
+    "saves_to_likes_weak_pct": 2.0,
+    "comment_to_like_strong_pct": 2.0,
+    "reel_retention_strong_pct": 50.0,
+    "reel_retention_weak_pct": 30.0,
+    "posting_frequency_min_per_week": 4,
+    "posting_frequency_strong_per_week": 4,
+    "posting_frequency_weak_per_week": 2,
+    "reels_share_strong_pct": 50.0,
+    "reels_share_weak_pct": 30.0,
+    "follower_growth_30d_strong_pct": 3.0,
+    "follower_growth_30d_weak_pct": 1.0,
+    "bio_length_min": 80,
+    "bio_length_max": 150,
+    "highlights_count_min": 4
+  },
+  "grades": {
+    "A": [85, 100],
+    "B": [70, 84.99],
+    "C": [55, 69.99],
+    "D": [40, 54.99],
+    "F": [0, 39.99]
+  }
+}

@@ -1,0 +1,17 @@
+# Data
+pandas==2.2.*
+python-dateutil==2.9.*
+
+# Reports
+matplotlib==3.9.*
+python-docx==1.1.*
+jinja2==3.1.*
+
+# Networking
+requests==2.32.*
+
+# Storage
+mysql-connector-python==9.0.*
+
+# Tests
+pytest==8.3.*
