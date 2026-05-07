@@ -100,6 +100,20 @@ These don't block code but DO block Phase 2 launch — start them while Phase 1 
 
 The Python audit tool reads from and writes to the same MySQL database the existing PHP studio admin panel uses. Phase 4 adds a PHP page (`admin/ig-audits.php`) to the existing admin project that surfaces audit data — that PHP file is a separate deliverable to Tapash's PHP repo, not in this repo.
 
+## Contributing
+
+This project is public so other developers can contribute. Before opening a PR, please read:
+
+- **[CONTRIBUTING.md](CONTRIBUTING.md)** — setup, branch conventions, test plan, code style
+- **[SECURITY.md](SECURITY.md)** — how to report a vulnerability (privately, not as a public issue)
+- **[.githooks/README.md](.githooks/README.md)** — enable the pre-commit hook to catch accidental secret commits
+
+### ⚠️ For all contributors: never commit secrets
+
+This repo is public — every push is permanent. **Do not** commit `config/config.py`, `.env`, real Meta tokens, MySQL passwords, or any other credentials. The `.gitignore` blocks the common patterns and `.githooks/pre-commit` is a safety net, but pay attention to `git status` before every commit.
+
+If you accidentally push a real secret, **rotate the credential immediately** (don't try to remove it from history — it's already cached). See [SECURITY.md](SECURITY.md) for the report flow.
+
 ## License
 
-Private — internal Twist N Turns tooling.
+[MIT](LICENSE) — free for any use, including commercial. By contributing, you agree your contributions are licensed under the same terms.

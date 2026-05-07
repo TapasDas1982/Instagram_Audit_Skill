@@ -1,0 +1,124 @@
+#!/usr/bin/env bash
+# Pre-commit hook — blocks commits that contain known secret patterns.
+#
+# Enable once per clone:
+#     git config core.hooksPath .githooks
+#
+# To bypass for an emergency commit (NOT recommended):
+#     git commit --no-verify
+# But if you bypass, you're saying "I have manually verified no secrets are leaking."
+
+set -euo pipefail
+
+RED='\033[0;31m'
+YELLOW='\033[0;33m'
+GREEN='\033[0;32m'
+NC='\033[0m' # No color
+
+fail() {
+    echo -e "${RED}❌ pre-commit blocked: $1${NC}" >&2
+    exit 1
+}
+
+warn() {
+    echo -e "${YELLOW}⚠️  $1${NC}" >&2
+}
+
+ok() {
+    echo -e "${GREEN}✓ $1${NC}"
+}
+
+# 1. Block sensitive files from being staged
+SENSITIVE_PATHS=(
+    "config/config.py"
+    ".env"
+    "*.pem"
+    "*.key"
+    "*.token"
+    "*.secret"
+    "id_rsa"
+    "id_ed25519"
+    "credentials.json"
+    "service-account*.json"
+    "aws-credentials*"
+    "gcp-key.json"
+)
+
+staged_files=$(git diff --cached --name-only --diff-filter=ACM)
+
+if [ -z "$staged_files" ]; then
+    ok "No files staged."
+    exit 0
+fi
+
+for path_pattern in "${SENSITIVE_PATHS[@]}"; do
+    while IFS= read -r f; do
+        case "$f" in
+            $path_pattern)
+                fail "$f is staged. This file pattern ($path_pattern) is sensitive — never commit it.
+
+If you need to update the example/template instead:
+  git reset HEAD $f
+  cp $f config/config.example.py    # for config files
+  # then edit the .example version with placeholders only"
+                ;;
+        esac
+    done <<< "$staged_files"
+done
+
+# 2. Scan staged content for token-shaped strings
+# We grep the diff (added lines only) for patterns that look like real secrets.
+
+TOKEN_PATTERNS=(
+    'EAA[A-Za-z0-9_\-]{40,}'                  # Meta long-lived access token
+    'ghp_[A-Za-z0-9]{36}'                      # GitHub Personal Access Token
+    'gho_[A-Za-z0-9]{36}'                      # GitHub OAuth token
+    'github_pat_[A-Za-z0-9_]{82}'              # GitHub fine-grained PAT
+    'AKIA[0-9A-Z]{16}'                         # AWS Access Key ID
+    'aws_secret_access_key\s*=\s*[A-Za-z0-9/+=]{40}'  # AWS Secret
+    'xox[baprs]-[A-Za-z0-9\-]{10,}'            # Slack tokens
+    'sk-[A-Za-z0-9]{32,}'                      # OpenAI / similar
+    'sk-ant-[A-Za-z0-9_\-]{32,}'               # Anthropic
+    '-----BEGIN (RSA |EC |DSA |OPENSSH )?PRIVATE KEY-----' # Private keys inline
+    'mysql://[^:]+:[^@]+@'                     # MySQL DSN with creds
+    'postgres://[^:]+:[^@]+@'                  # Postgres DSN with creds
+    'mongodb(\+srv)?://[^:]+:[^@]+@'           # MongoDB DSN
+)
+
+# Get the staged diff (only added lines, ignoring removals)
+diff_added=$(git diff --cached --diff-filter=ACM -U0 -- ':(exclude)*.lock' ':(exclude)*.svg' | grep -E '^\+' | grep -v '^+++' || true)
+
+if [ -z "$diff_added" ]; then
+    ok "No content added (binary or empty diff)."
+    exit 0
+fi
+
+found_token=0
+for pattern in "${TOKEN_PATTERNS[@]}"; do
+    if echo "$diff_added" | grep -E -q "$pattern"; then
+        match=$(echo "$diff_added" | grep -E "$pattern" | head -1)
+        echo -e "${RED}❌ pattern matched: $pattern${NC}" >&2
+        echo "    in line: ${match:0:120}..." >&2
+        found_token=1
+    fi
+done
+
+if [ "$found_token" -eq 1 ]; then
+    fail "Possible secret detected in staged content. Review the diff and either:
+  - Use a placeholder (e.g. REPLACE_ME, YOUR_TOKEN_HERE) in committed files
+  - Move the real value to config/config.py (gitignored)
+  - If this is a false positive (e.g. a token in a test fixture that's intentionally fake), use git commit --no-verify and document why in the commit message."
+fi
+
+# 3. Heuristic: warn about password = "..." patterns where the value isn't an obvious placeholder
+suspicious_pw=$(echo "$diff_added" | grep -iE '(password|passwd|pwd)\s*[:=]\s*["'\'']?[A-Za-z0-9!@#$%^&*_\-]{8,}["'\'']?' | grep -ivE '(REPLACE_ME|STRONG_PASSWORD|YOUR_|EXAMPLE|None|null|<|placeholder|xxx+|\*\*\*+)' || true)
+
+if [ -n "$suspicious_pw" ]; then
+    warn "Possible non-placeholder password value in staged content:"
+    echo "$suspicious_pw" | head -3 >&2
+    warn "If these are real, move them to config/config.py. If they're documentation examples, use REPLACE_ME or YOUR_PASSWORD_HERE."
+    warn "This is a warning only — commit will proceed. Make sure you've checked."
+fi
+
+ok "No secrets detected in staged content."
+exit 0

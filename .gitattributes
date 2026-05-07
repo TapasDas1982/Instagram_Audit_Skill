@@ -1,0 +1,26 @@
+# Default to native line endings on checkout, normalize to LF in repo
+* text=auto
+
+# Always LF for shell scripts and Linux config files — hook scripts must
+# work when checked out on a Linux box even if committed from Windows.
+*.sh        text eol=lf
+.githooks/* text eol=lf
+*.cron      text eol=lf
+deploy/cron/* text eol=lf
+
+# Always CRLF for Windows-only files
+*.bat       text eol=crlf
+*.cmd       text eol=crlf
+*.ps1       text eol=crlf
+
+# Binary files
+*.docx      binary
+*.xlsx      binary
+*.pdf       binary
+*.png       binary
+*.jpg       binary
+*.jpeg      binary
+*.gif       binary
+*.ico       binary
+*.zip       binary
+*.gz        binary

@@ -1,14 +1,70 @@
-# Secrets — NEVER commit
+# =============================================================
+# SECRETS — NEVER commit. Public repo: assume any push is permanent.
+# =============================================================
 config/config.py
+config/config.*.py            # any environment-specific override
+config/secrets.*
 .env
+.env.*
+!.env.example                 # template files are fine
+
+# SSH / SSL / TLS / GPG
 *.pem
 *.key
+*.crt
+*.csr
+*.p12
+*.pfx
+id_rsa
+id_rsa.*
+id_ed25519
+id_ed25519.*
+*.gpg
+*.asc
 
-# Generated artifacts
+# Cloud / vendor credentials
+.aws/
+aws-credentials*
+gcp-key.json
+*-credentials.json
+*-credentials.yml
+*-credentials.yaml
+service-account*.json
+.npmrc
+.pypirc
+
+# Token / API key stash files
+*.token
+*.secret
+secrets.txt
+tokens.txt
+credentials*
+
+# Database dumps and backups
+backups/
+dumps/
+*.sql.gz
+*.sql.bz2
+*.sql.xz
+*.dump
+*.bak
+
+# Meta / Instagram cached responses (may include personal data)
 cache/
-output/
+ig_data/
+api_cache/
 
+# =============================================================
+# Generated artifacts (reports may contain audit findings)
+# =============================================================
+output/
+reports/
+*.docx                        # accidentally generated reports outside output/
+!templates/*.docx             # do commit the report template
+
+# =============================================================
 # Python
+# =============================================================
 __pycache__/
 *.py[cod]
 *$py.class
@@ -21,13 +77,17 @@ ENV/
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
+.coverage
+htmlcov/
 *.egg-info/
 .installed.cfg
 *.egg
 build/
 dist/
 
+# =============================================================
 # IDE / editor
+# =============================================================
 .vscode/
 .idea/
 *.swp
@@ -35,10 +95,10 @@ dist/
 *~
 .DS_Store
 Thumbs.db
-
-# OS
 desktop.ini
 
+# =============================================================
 # Logs
+# =============================================================
 *.log
 logs/
