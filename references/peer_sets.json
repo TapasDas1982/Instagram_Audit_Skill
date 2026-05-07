@@ -1,0 +1,25 @@
+{
+  "_comment": "Per-location peer sets for Phase 3 benchmarking. Edit peer usernames before first run. Accounts must be Business or Creator type — Personal accounts cannot be queried via Business Discovery API.",
+  "locations": {
+    "ballygunge": {
+      "primary_peers": ["peer_dance_studio_kolkata_1", "peer_dance_studio_kolkata_2", "peer_dance_studio_kolkata_3"],
+      "aspirational_peers": ["top_dance_studio_kolkata_1", "top_dance_studio_kolkata_2"],
+      "national_best": ["national_dance_brand_1", "national_dance_brand_2"]
+    },
+    "salt_lake": {
+      "primary_peers": ["peer_dance_studio_saltlake_1", "peer_dance_studio_saltlake_2"],
+      "aspirational_peers": ["top_dance_studio_saltlake_1"],
+      "national_best": ["national_dance_brand_1", "national_dance_brand_2"]
+    },
+    "default": {
+      "_comment": "Used when studio_location doesn't match any defined location",
+      "primary_peers": [],
+      "aspirational_peers": [],
+      "national_best": []
+    }
+  },
+  "scoring": {
+    "_comment": "Quartile rank: top 25% → 100, median → 50, bottom 25% → 0",
+    "metrics_used": ["observable_engagement_rate", "reels_share", "posts_per_week", "hashtag_overlap"]
+  }
+}

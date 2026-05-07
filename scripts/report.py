@@ -137,6 +137,77 @@ def _add_findings_list(
             run.font.color.rgb = RGBColor(0x60, 0x60, 0x60)
 
 
+def _add_competitive_position_section(
+    doc: Document,
+    benchmarks_result: DimensionResult | None,
+    charts: Mapping[str, Path],
+) -> None:
+    """Add Competitive Position section to the report.
+
+    Shows peer comparison metrics table, top peer-tactic findings, and the
+    peer_comparison chart if one was rendered into the charts directory.
+    Skipped entirely if benchmarks_result is None.
+    """
+    if benchmarks_result is None:
+        return
+
+    _add_heading(doc, "Competitive Position", level=1)
+
+    peer_count = benchmarks_result.metrics.get("peer_count", 0)
+    if not peer_count:
+        doc.add_paragraph(
+            "Peer benchmarking not active — add real peer account usernames "
+            "to references/peer_sets.json to enable this section."
+        )
+        return
+
+    # ---- Metrics table ----
+    metric_labels: dict[str, str] = {
+        "peer_count": "Peers Compared",
+        "subject_followers": "Your Followers",
+        "peer_median_followers": "Peer Median Followers",
+        "follower_quartile_score": "Follower Rank Score",
+        "activity_quartile_score": "Activity Rank Score",
+        "er_benchmark_score": "ER Benchmark Score",
+        "observable_er_pct": "Observable ER (%)",
+    }
+    rows: list[tuple[str, str]] = []
+    for key, label in metric_labels.items():
+        val = benchmarks_result.metrics.get(key)
+        if val is not None:
+            if isinstance(val, float):
+                rows.append((label, f"{val:.1f}"))
+            else:
+                rows.append((label, str(val)))
+    _add_kv_table(doc, rows)
+
+    # ---- Peer-tactic findings ----
+    peer_findings = [
+        f for f in benchmarks_result.findings
+        if f.evidence and "peer" in f.evidence.lower()
+    ]
+    if peer_findings:
+        doc.add_paragraph().add_run("Peer Insights:").font.bold = True
+        for f in peer_findings[:3]:
+            p = doc.add_paragraph(style="List Bullet")
+            p.add_run(f.title).font.bold = True
+            if f.evidence:
+                doc.add_paragraph(
+                    f"  {f.evidence}"
+                ).paragraph_format.left_indent = Inches(0.3)
+            if f.recommended_action:
+                doc.add_paragraph(
+                    f"  → {f.recommended_action}"
+                ).paragraph_format.left_indent = Inches(0.3)
+
+    # ---- Chart ----
+    if "peer_comparison" in charts and charts["peer_comparison"].exists():
+        try:
+            doc.add_picture(str(charts["peer_comparison"]), width=Inches(6.0))
+        except Exception:
+            pass
+
+
 def _add_dimension_section(doc: Document, result: DimensionResult, charts: Mapping[str, Path]) -> None:
     _add_heading(doc, f"{result.name.title()} — {result.score:.0f}/100", level=2)
 
@@ -245,6 +316,10 @@ def generate_report(
     _add_heading(doc, "Top Findings", level=1)
     prioritized = _prioritized_findings(results)
     _add_findings_list(doc, prioritized, max_items=8)
+
+    # ---- Competitive Position (Phase 3) ----
+    benchmarks_result = results.get("benchmarks")
+    _add_competitive_position_section(doc, benchmarks_result, charts)
 
     # ---- Per-dimension detail ----
     doc.add_page_break()

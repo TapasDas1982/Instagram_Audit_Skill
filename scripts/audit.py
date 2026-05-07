@@ -63,6 +63,27 @@ def _load_mysql_config() -> dict | None:
         return None
 
 
+def _load_meta_config() -> dict | None:
+    """Load META config from config/config.py if it exists; else return None."""
+    try:
+        sys.path.insert(0, str(_PROJECT_ROOT / "config"))
+        import config  # type: ignore  # noqa: PLC0415
+        return getattr(config, "META", None)
+    except Exception:
+        return None
+
+
+def _load_audit_log_path() -> str | None:
+    """Load the audit log path from AUDIT config if configured."""
+    try:
+        sys.path.insert(0, str(_PROJECT_ROOT / "config"))
+        import config  # type: ignore  # noqa: PLC0415
+        audit_cfg = getattr(config, "AUDIT", {})
+        return audit_cfg.get("log_path")
+    except Exception:
+        return None
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Run an Instagram audit and produce a Word report.")
     parser.add_argument("--source", choices=["csv", "api"], required=True)
@@ -92,9 +113,22 @@ def main() -> int:
             profile_json_path=args.profile_json,
             period_days=args.period_days,
         )
-    else:
-        log.error("--source api lands in Phase 2. Use --source csv for now.")
-        return 2
+    else:  # source == "api"
+        meta_config = _load_meta_config()
+        if not meta_config or not meta_config.get("long_lived_token"):
+            parser.error(
+                "--source api requires META config in config/config.py. "
+                "Set long_lived_token, ig_user_id, and graph_api_version."
+            )
+        cache_dir = _PROJECT_ROOT / "cache"
+        audit_log_path = _load_audit_log_path()
+        from scripts.ingest_api import build_audit_input_from_api  # noqa: E402
+        audit_input = build_audit_input_from_api(
+            meta_config,
+            period_days=args.period_days,
+            cache_dir=cache_dir,
+            log_path=audit_log_path,
+        )
 
     log.info(
         "Loaded %d posts for @%s (%s → %s, source=%s)",
@@ -110,7 +144,31 @@ def main() -> int:
     results = {}
     for name, evaluate in DIMENSION_EVALUATORS.items():
         log.debug("Evaluating dimension: %s", name)
-        results[name] = evaluate(audit_input, thresholds=scorer.thresholds)
+        if name == "benchmarks":
+            # Phase 3: pass ig_client and studio_location for peer comparison.
+            # IGClient is only available when --source api is used.
+            _ig_client = None
+            if args.source == "api":
+                try:
+                    from lib.ig_api import IGClient  # noqa: PLC0415
+                    meta_cfg = _load_meta_config()
+                    if meta_cfg and meta_cfg.get("long_lived_token"):
+                        _ig_client = IGClient(
+                            ig_user_id=str(meta_cfg["ig_user_id"]),
+                            access_token=str(meta_cfg["long_lived_token"]),
+                            api_version=meta_cfg.get("graph_api_version", "v21.0"),
+                            cache_dir=_PROJECT_ROOT / "cache",
+                        )
+                except Exception as _exc:
+                    log.debug("Could not init IGClient for benchmarks: %s", _exc)
+            results[name] = evaluate(
+                audit_input,
+                thresholds=scorer.thresholds,
+                ig_client=_ig_client,
+                studio_location=args.studio_location,
+            )
+        else:
+            results[name] = evaluate(audit_input, thresholds=scorer.thresholds)
 
     dim_scores = {name: r.score for name, r in results.items()}
     overall = scorer.overall(dim_scores)

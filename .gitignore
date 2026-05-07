@@ -101,4 +101,5 @@ desktop.ini
 # Logs
 # =============================================================
 *.log
-logs/
+# Log files (but keep directory via .gitkeep)
+logs/*.log

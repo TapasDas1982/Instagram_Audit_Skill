@@ -1,0 +1,32 @@
+# Instagram Audit Skill — Meta long-lived token refresh
+#
+# SETUP INSTRUCTIONS:
+#   1. Replace /path/to/venv and /path/to/project with real paths on the server.
+#      Example paths for Hetzner VPS layout:
+#        /opt/ig_audit/venv/bin/python
+#        /opt/ig_audit/Instagram_Audit_Skill
+#
+#   2. Add to the crontab with:
+#        crontab -e
+#
+#   3. Paste the cron line below (replacing placeholder paths), then save.
+#
+#   4. Verify with:
+#        crontab -l
+#
+#   5. Confirm the log file is writable:
+#        sudo touch /var/log/ig_audit_token.log
+#        sudo chown <your-deploy-user>: /var/log/ig_audit_token.log
+#
+# HOW IT WORKS:
+#   - Runs on the 1st of every month at 3:00 AM server time.
+#   - The script checks token_expires_at in config/config.py.
+#   - If the token expires within 14 days it is refreshed automatically.
+#   - A fresh 60-day token is written back to config/config.py atomically.
+#   - Only the expiry date is logged — the token value is never written to logs.
+#
+# MANUAL REFRESH (for testing):
+#   /path/to/venv/bin/python /path/to/project/scripts/refresh_token.py --force
+#
+# Field order:  minute  hour  day-of-month  month  day-of-week  command
+0 3 1 * * /path/to/venv/bin/python /path/to/project/scripts/refresh_token.py >> /var/log/ig_audit_token.log 2>&1

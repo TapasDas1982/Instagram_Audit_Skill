@@ -209,6 +209,52 @@ def _render_empty(output_path: str | Path, message: str) -> Path:
     return out
 
 
+def render_peer_comparison(
+    subject_username: str,
+    subject_followers: int,
+    peer_data: list[dict],  # [{"username": str, "followers_count": int}, ...]
+    output_path: str | Path,
+) -> Path:
+    """Horizontal bar chart: subject vs top 5 peers by follower count.
+
+    Returns `output_path` unchanged (without writing) if peer_data is empty.
+    """
+    output_path = Path(output_path)
+    if not peer_data:
+        return output_path  # nothing to render — caller checks for file existence
+
+    # Sort peers by followers desc, take top 5
+    top_peers = sorted(
+        peer_data, key=lambda p: p.get("followers_count", 0), reverse=True
+    )[:5]
+
+    names = [f"@{p['username']}" for p in top_peers] + [f"@{subject_username} (you)"]
+    values = [p.get("followers_count", 0) for p in top_peers] + [subject_followers]
+    colors = [PALETTE["neutral"]] * len(top_peers) + [PALETTE["primary"]]
+
+    max_val = max(values) if values else 1
+
+    fig, ax = plt.subplots(figsize=(8, max(3.0, len(names) * 0.7)))
+    bars = ax.barh(names, values, color=colors)
+    ax.set_xlabel("Followers")
+    ax.set_title("Follower Count vs Peers", loc="left", fontweight="bold")
+    _setup_axes(ax)
+    for bar in bars:
+        ax.text(
+            bar.get_width() + max_val * 0.01,
+            bar.get_y() + bar.get_height() / 2,
+            f"{int(bar.get_width()):,}",
+            va="center",
+            fontsize=9,
+        )
+
+    fig.tight_layout()
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    fig.savefig(str(output_path), dpi=150, bbox_inches="tight")
+    plt.close(fig)
+    return output_path
+
+
 def render_all(audit_input: AuditInput, scores: dict[str, float], output_dir: str | Path) -> dict[str, Path]:
     """Render every chart used in the report. Returns a name → Path map."""
     out_dir = Path(output_dir)
@@ -228,4 +274,7 @@ def render_all(audit_input: AuditInput, scores: dict[str, float], output_dir: st
             audit_input.posts, out_dir / "hashtag_top.png"
         ),
         "score_radar": render_score_radar(scores, out_dir / "score_radar.png"),
+        # peer_comparison is rendered by the benchmarks dimension (or benchmark_peers.py)
+        # when live peer data is available via Business Discovery.  Not rendered here
+        # because render_all does not have access to peer_data from the API response.
     }
